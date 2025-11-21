@@ -11,13 +11,10 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Fonts (Vazirmatn & Orbitron for Crypto) -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;300;400;500;700;900&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
-    <!-- Chart.js (Admin Charts) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- XLSX (Excel Export) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
 
     <script>
@@ -39,7 +36,7 @@
                         }
                     },
                     animation: {
-                        'fade-in': 'fadeIn 1s ease-in-out',
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
                         'slide-up': 'slideUp 0.5s ease-out',
                     },
                     keyframes: {
@@ -58,7 +55,7 @@
         ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
         
         .glass-panel {
-            background: rgba(18, 18, 18, 0.9);
+            background: rgba(18, 18, 18, 0.95);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(212, 175, 55, 0.1);
         }
@@ -67,576 +64,338 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .crypto-text { color: #00ff9d; text-shadow: 0 0 10px rgba(0, 255, 157, 0.5); }
         
-        /* Slider Styles */
+        /* Slider Logic */
         .slide { display: none; animation: fadeIn 1.5s; }
         .slide.active { display: block; }
         
-        /* Game Canvas */
-        #puzzle-canvas { border: 2px solid #D4AF37; cursor: pointer; }
+        /* Mobile Menu Transition */
+        #mobile-menu { transition: transform 0.3s ease-in-out; }
+        .mobile-menu-closed { transform: translateX(100%); }
+        .mobile-menu-open { transform: translateX(0); }
     </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col transition-colors duration-300">
+<body class="antialiased min-h-screen flex flex-col">
 
-    <!-- Top Bar (Weather & Lang) -->
-    <div class="bg-solano-panel border-b border-white/5 py-1 px-4 flex justify-between items-center text-xs z-50 relative">
-        <div class="flex items-center gap-4 text-gray-400">
-            <span id="weather-display"><i class="fa-solid fa-cloud-sun mr-1"></i> مشهد: در حال دریافت...</span>
-            <span class="text-solano-gold border-r border-white/10 pr-4 mr-4 hidden md:inline" id="indoor-temp">دمای رستوران: 24°C</span>
+    <!-- Top Bar -->
+    <div class="bg-solano-panel border-b border-white/5 py-2 px-4 flex justify-between items-center text-[10px] md:text-xs z-50 relative">
+        <div class="flex items-center gap-2 md:gap-4 text-gray-400">
+            <span id="weather-display"><i class="fa-solid fa-cloud-sun mr-1"></i> مشهد: ...</span>
+            <span class="text-solano-gold border-r border-white/10 pr-2 mr-2 hidden sm:inline" id="indoor-temp">دمای رستوران: 24°C</span>
         </div>
         <div class="flex gap-2">
             <button onclick="app.setLang('fa')" class="hover:text-solano-gold">FA</button>
             <button onclick="app.setLang('en')" class="hover:text-solano-gold">EN</button>
-            <button onclick="app.setLang('ar')" class="hover:text-solano-gold">AR</button>
         </div>
     </div>
 
     <!-- Navigation -->
     <nav class="sticky top-0 w-full z-40 glass-panel shadow-lg border-b border-solano-gold/20">
         <div class="max-w-7xl mx-auto px-4">
-            <div class="flex items-center justify-between h-20">
-                <!-- Logo -->
-                <div class="flex items-center gap-3 cursor-pointer" onclick="app.navigate('home')">
-                    <img src="logo.jpg" alt="Solano" class="h-14 w-14 rounded-full border-2 border-solano-gold shadow-lg object-cover bg-black">
-                    <div class="hidden md:block">
-                        <span class="text-2xl font-black gold-text block tracking-tighter">SOLANO</span>
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <!-- Logo & Hamburger -->
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-white text-2xl" onclick="app.toggleMobileMenu()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="flex items-center gap-3 cursor-pointer" onclick="app.navigate('home')">
+                        <img src="logo.jpg" alt="Solano" class="h-10 w-10 md:h-14 md:w-14 rounded-full border-2 border-solano-gold shadow-lg object-cover bg-black">
+                        <div class="hidden md:block">
+                            <span class="text-xl md:text-2xl font-black gold-text block tracking-tighter">SOLANO</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Desktop Menu -->
                 <div class="hidden lg:flex items-center space-x-6 space-x-reverse text-sm font-medium">
-                    <button onclick="app.navigate('home')" data-t="home" class="hover:text-solano-gold transition">خانه</button>
-                    <button onclick="app.navigate('menu')" data-t="menu" class="hover:text-solano-gold transition">منو و سفارش</button>
-                    <button onclick="app.navigate('games')" data-t="games" class="hover:text-solano-gold transition">سرگرمی و جوایز</button>
-                    <button onclick="app.navigate('club')" data-t="club" class="hover:text-solano-gold transition text-solano-gold">VIP CLUB</button>
-                    <button onclick="app.navigate('calendar')" data-t="calendar" class="hover:text-solano-gold transition">تقویم</button>
-                    <button onclick="app.navigate('about')" data-t="about" class="hover:text-solano-gold transition">درباره ما</button>
-                    <button onclick="app.navigate('contact')" data-t="contact" class="hover:text-solano-gold transition">ارتباط با ما</button>
+                    <button onclick="app.navigate('home')" class="hover:text-solano-gold transition">خانه</button>
+                    <button onclick="app.navigate('menu')" class="hover:text-solano-gold transition">منو و سفارش</button>
+                    <button onclick="app.navigate('games')" class="hover:text-solano-gold transition">سرگرمی</button>
+                    <button onclick="app.navigate('club')" class="hover:text-solano-gold transition text-solano-gold">VIP CLUB</button>
+                    <button onclick="app.navigate('calendar')" class="hover:text-solano-gold transition">تقویم</button>
+                    <button onclick="app.navigate('contact')" class="hover:text-solano-gold transition">ارتباط با ما</button>
                 </div>
 
                 <!-- Actions -->
                 <div class="flex items-center gap-3">
-                    <button onclick="app.navigate('admin')" class="text-gray-400 hover:text-red-500" title="Admin"><i class="fa-solid fa-user-shield"></i></button>
+                    <button onclick="app.navigate('admin')" class="text-gray-400 hover:text-red-500 hidden md:block"><i class="fa-solid fa-user-shield"></i></button>
                     <button onclick="app.toggleCart()" class="relative p-2 hover:text-solano-gold">
                         <i class="fa-solid fa-cart-shopping text-lg"></i>
                         <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-600 text-[10px] w-4 h-4 flex items-center justify-center rounded-full hidden">0</span>
                     </button>
-                    <button onclick="app.toggleAuth()" id="auth-btn" class="bg-solano-gold text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-white transition shadow-lg shadow-yellow-600/20">
-                        ورود / عضویت
+                    <button onclick="app.toggleAuth()" id="auth-btn" class="bg-solano-gold text-black px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs font-bold hover:bg-white transition">
+                        ورود
                     </button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main id="main-content" class="flex-grow relative">
-        <!-- Dynamic Content -->
-    </main>
-
-    <!-- Side Ads (Non-intrusive) -->
-    <div id="side-ads" class="fixed left-4 bottom-20 w-40 hidden xl:block z-30 space-y-4">
-        <!-- Ads injected via JS -->
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 z-50 bg-black/95 mobile-menu-closed lg:hidden flex flex-col pt-20 px-6 space-y-6">
+        <button onclick="app.toggleMobileMenu()" class="absolute top-4 right-4 text-white text-3xl"><i class="fa-solid fa-times"></i></button>
+        <button onclick="app.navigate('home'); app.toggleMobileMenu()" class="text-xl font-bold text-white border-b border-white/10 pb-2 text-right">خانه</button>
+        <button onclick="app.navigate('menu'); app.toggleMobileMenu()" class="text-xl font-bold text-white border-b border-white/10 pb-2 text-right">منو و سفارش</button>
+        <button onclick="app.navigate('games'); app.toggleMobileMenu()" class="text-xl font-bold text-white border-b border-white/10 pb-2 text-right">سرگرمی و جایزه</button>
+        <button onclick="app.navigate('club'); app.toggleMobileMenu()" class="text-xl font-bold text-solano-gold border-b border-white/10 pb-2 text-right">باشگاه مشتریان VIP</button>
+        <button onclick="app.navigate('contact'); app.toggleMobileMenu()" class="text-xl font-bold text-white border-b border-white/10 pb-2 text-right">ارتباط با ما</button>
+        <button onclick="app.navigate('admin'); app.toggleMobileMenu()" class="text-sm text-red-500 pt-4 text-right">پنل مدیریت</button>
     </div>
 
-    <!-- AI Chat Floating Button -->
-    <div class="fixed bottom-6 right-6 z-50">
-        <button onclick="app.toggleAI()" class="bg-gradient-to-r from-blue-600 to-purple-600 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.5)] hover:scale-110 transition border border-white/20">
-            <i class="fa-solid fa-robot text-white text-2xl animate-pulse"></i>
+    <!-- Main Content -->
+    <main id="main-content" class="flex-grow relative min-h-[50vh]">
+        <!-- Content injected via JS -->
+        <div class="flex items-center justify-center h-64"><div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-solano-gold"></div></div>
+    </main>
+
+    <!-- Side Ads (Desktop Only) -->
+    <div id="side-ads" class="fixed left-4 bottom-20 w-32 hidden xl:block z-30 space-y-4"></div>
+
+    <!-- AI Chat Button -->
+    <div class="fixed bottom-4 right-4 z-40">
+        <button onclick="app.toggleAI()" class="bg-blue-600 w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition border border-white/20">
+            <i class="fa-solid fa-robot text-white text-xl"></i>
         </button>
     </div>
 
     <!-- AI Chat Window -->
-    <div id="ai-window" class="fixed bottom-24 right-6 w-80 md:w-96 bg-solano-panel border border-solano-gold/30 rounded-2xl shadow-2xl hidden z-50 flex flex-col h-[450px]">
+    <div id="ai-window" class="fixed bottom-20 right-4 w-72 md:w-96 bg-[#151515] border border-solano-gold/30 rounded-2xl shadow-2xl hidden z-40 flex flex-col h-[400px]">
         <div class="bg-gradient-to-r from-blue-900 to-purple-900 p-3 rounded-t-2xl flex justify-between items-center">
-            <span class="font-bold text-white text-sm"><i class="fa-solid fa-sparkles mr-2 text-yellow-300"></i>Solano AI</span>
-            <button onclick="app.toggleAI()" class="text-white hover:text-red-400"><i class="fa-solid fa-times"></i></button>
+            <span class="font-bold text-white text-sm">Solano AI</span>
+            <button onclick="app.toggleAI()" class="text-white"><i class="fa-solid fa-times"></i></button>
         </div>
         <div id="ai-messages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
-            <div class="bg-white/10 p-2 rounded-lg rounded-tr-none self-end ml-auto max-w-[90%] text-right border border-white/5">
-                سلام! من هوش مصنوعی سلانو هستم. راجع به غذاها، رژیم یا رستوران سوالی داری؟ 🤖
-            </div>
+            <div class="bg-white/10 p-2 rounded-lg rounded-tr-none self-end ml-auto text-right">سلام! چطور میتونم کمکت کنم؟ 🤖</div>
         </div>
-        <div class="p-3 border-t border-white/10">
-            <div class="flex gap-2">
-                <input type="text" id="ai-input" placeholder="سوال بپرسید..." class="flex-1 bg-black border border-white/20 rounded px-2 py-2 text-xs text-white focus:border-solano-gold outline-none">
-                <button onclick="app.sendAI()" class="text-blue-400 hover:text-white"><i class="fa-solid fa-paper-plane"></i></button>
-            </div>
+        <div class="p-2 border-t border-white/10 flex gap-2">
+            <input type="text" id="ai-input" placeholder="سوال..." class="flex-1 bg-black border border-white/20 rounded px-2 text-xs text-white h-10">
+            <button onclick="app.sendAI()" class="text-blue-400 h-10 w-10 flex items-center justify-center"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="bg-[#020202] border-t border-white/10 pt-10 pb-6 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
+    <footer class="bg-black border-t border-white/10 pt-10 pb-20 md:pb-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm text-center md:text-right">
             <div>
                 <h3 class="text-2xl font-black gold-text mb-4">SOLANO</h3>
-                <p class="text-gray-500 mb-4">اولین رستوران هوشمند و کریپتویی مشهد.</p>
-                <div class="flex gap-3 text-xl text-gray-400">
-                    <i class="fa-brands fa-instagram hover:text-solano-gold cursor-pointer"></i>
-                    <i class="fa-brands fa-telegram hover:text-solano-gold cursor-pointer"></i>
-                    <i class="fa-brands fa-twitter hover:text-solano-gold cursor-pointer"></i>
-                </div>
+                <p class="text-gray-500">طعم واقعی آتش در اولین رستوران کریپتویی مشهد.</p>
             </div>
             <div>
-                <h4 class="font-bold text-white mb-4">دسترسی سریع</h4>
+                <h4 class="font-bold text-white mb-4">دسترسی</h4>
                 <ul class="space-y-2 text-gray-500">
                     <li onclick="app.navigate('menu')" class="cursor-pointer hover:text-solano-gold">منو</li>
-                    <li onclick="app.navigate('club')" class="cursor-pointer hover:text-solano-gold">باشگاه VIP</li>
-                    <li onclick="app.navigate('games')" class="cursor-pointer hover:text-solano-gold">بازی و جایزه</li>
+                    <li onclick="app.navigate('club')" class="cursor-pointer hover:text-solano-gold">باشگاه</li>
                 </ul>
             </div>
             <div>
-                <h4 class="font-bold text-white mb-4">ارتباط با ما</h4>
-                <ul class="space-y-2 text-gray-500">
-                    <li><i class="fa-solid fa-location-dot ml-2"></i> مشهد، قاسم‌آباد، میدان مادر، جنب شرکت برق</li>
-                    <li><i class="fa-solid fa-phone ml-2"></i> 05136641119</li>
-                    <li><i class="fa-solid fa-wallet ml-2"></i> پرداخت کریپتو دارد</li>
-                </ul>
+                <h4 class="font-bold text-white mb-4">تماس</h4>
+                <p class="text-gray-500">05136641119</p>
+                <p class="text-gray-500 text-xs mt-1">مشهد، قاسم‌آباد، میدان مادر</p>
             </div>
-            <div>
-                <h4 class="font-bold text-white mb-4">نماد اعتماد</h4>
-                <div class="flex gap-2">
-                    <div class="bg-white/10 w-16 h-16 rounded flex items-center justify-center"><i class="fa-solid fa-certificate text-2xl text-gray-500"></i></div>
-                    <div class="bg-white/10 w-16 h-16 rounded flex items-center justify-center"><i class="fa-brands fa-bitcoin text-2xl text-solano-gold"></i></div>
-                </div>
+            <div class="flex justify-center md:justify-start items-center gap-2">
+                <i class="fa-brands fa-bitcoin text-3xl text-solano-gold"></i>
+                <i class="fa-solid fa-shield-halved text-3xl text-gray-600"></i>
             </div>
         </div>
     </footer>
 
-    <!-- Modals (Auth, Cart, Game, Withdrawal) -->
-    <div id="modal-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4" onclick="app.closeModals(event)">
-        <!-- Content Injected dynamically -->
-    </div>
+    <!-- Modals Overlay -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4" onclick="app.closeModals(event)"></div>
 
-    <!-- Main Application Logic -->
+    <!-- JAVASCRIPT -->
     <script>
-        // --- DATABASE MOCK & CONFIG ---
+        // --- DATA & STATE ---
         const db = {
             menu: [
                 { id: 1, name: "پیتزا پپرونی", cat: "pizza", price: 350000, stock: true, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400" },
                 { id: 2, name: "استیک ریب‌آی", cat: "steak", price: 980000, stock: true, img: "https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400" },
-                { id: 3, name: "شاه میگو گریل", cat: "seafood", price: 1200000, stock: true, img: "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=400" },
-                { id: 4, name: "شیشلیک مخصوص", cat: "kebab", price: 850000, stock: true, img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400" },
-                { id: 5, name: "مرغ سوخاری ۵ تکه", cat: "fried", price: 420000, stock: false, img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400" },
+                { id: 3, name: "شاه میگو", cat: "seafood", price: 1200000, stock: true, img: "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=400" },
+                { id: 4, name: "شیشلیک", cat: "kebab", price: 850000, stock: true, img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400" },
+                { id: 5, name: "مرغ سوخاری", cat: "fried", price: 420000, stock: false, img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400" },
+                { id: 6, name: "پیتزا مخصوص", cat: "pizza", price: 450000, stock: true, img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400" }
             ],
             ads: [
-                { id: 1, title: "تبلیغ نوشابه انرژی‌زا", img: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200" },
-                { id: 2, title: "تبلیغ اسنپ", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Google_Maps_icon_%282020%29.svg/100px-Google_Maps_icon_%282020%29.svg.png" } // Placeholder
+                { id: 1, img: "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=200" }
             ],
-            gallery: [
-                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600", 
-                "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=600",
-                "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600"
-            ],
-            news: [],
-            transactions: [], // Accounting
-            users: [],
-            adminSettings: {
-                walletAddress: "0xSolanoRestaurantWalletAddress123456",
-                usdtPrice: 60000,
-                indoorTemp: 24,
-                solanoTokenDiscount: 10, // %
-                cryptoDiscount: 5 // %
-            }
-        };
-
-        const translations = {
-            fa: { home: "خانه", menu: "منو", about: "درباره ما" },
-            en: { home: "Home", menu: "Menu", about: "About Us" },
-            ar: { home: "الصفحة الرئيسية", menu: "قائمة الطعام", about: "معلومات عنا" }
+            gallery: ["https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600"],
+            adminSettings: { usdtPrice: 60000, walletAddress: "TRC20..." }
         };
 
         const app = {
-            state: {
-                lang: 'fa',
-                view: 'home',
-                user: null, // { name, phone, wallet(Toman), cryptoWallet(USDT), role: 'user'|'admin', tier: 'bronze' }
-                cart: [],
-                cryptoConnected: false
-            },
+            state: { user: null, cart: [], view: 'home' },
+            sliderInterval: null,
 
             init() {
-                this.fetchWeather();
-                this.navigate('home');
-                this.renderSideAds();
-                
-                // Restore user from local storage simulation
-                const savedUser = localStorage.getItem('solano_user');
-                if(savedUser) {
-                    this.state.user = JSON.parse(savedUser);
-                    this.updateAuthUI();
+                try {
+                    // Restore User
+                    const saved = localStorage.getItem('solano_user');
+                    if(saved) { 
+                        this.state.user = JSON.parse(saved); 
+                        this.updateAuthUI(); 
+                    }
+                    
+                    // Load Weather (Safe fetch)
+                    fetch('https://api.open-meteo.com/v1/forecast?latitude=36.29&longitude=59.60&current_weather=true')
+                        .then(r => r.json())
+                        .then(d => document.getElementById('weather-display').innerHTML = `<i class="fa-solid fa-cloud-sun mr-1"></i> مشهد: ${d.current_weather.temperature}°C`)
+                        .catch(e => console.log('Weather error', e));
+
+                    // Render Side Ads
+                    this.renderAds();
+
+                    // Start at Home
+                    this.navigate('home');
+
+                } catch (err) {
+                    console.error("Init Error:", err);
+                    alert("خطایی در بارگذاری سایت رخ داده است. لطفا صفحه را رفرش کنید.");
                 }
             },
 
-            setLang(l) {
-                this.state.lang = l;
-                document.documentElement.lang = l;
-                document.documentElement.dir = l === 'en' ? 'ltr' : 'rtl';
-                this.navigate(this.state.view); // Re-render
-            },
-
-            fetchWeather() {
-                // Real API call to Open-Meteo
-                fetch('https://api.open-meteo.com/v1/forecast?latitude=36.29&longitude=59.60&current_weather=true')
-                    .then(res => res.json())
-                    .then(data => {
-                        document.getElementById('weather-display').innerHTML = `<i class="fa-solid fa-cloud-sun mr-1"></i> مشهد: ${data.current_weather.temperature}°C`;
-                    })
-                    .catch(() => {});
-                document.getElementById('indoor-temp').innerText = `دمای رستوران: ${db.adminSettings.indoorTemp}°C`;
-            },
-
-            // --- NAVIGATION & VIEWS ---
+            // --- NAVIGATION SYSTEM ---
             navigate(view) {
                 this.state.view = view;
                 window.scrollTo(0,0);
                 const container = document.getElementById('main-content');
                 
-                // Helper to generate view HTML
+                // Clear any running slider intervals to prevent errors
+                if (this.sliderInterval) clearInterval(this.sliderInterval);
+
+                let html = '';
                 switch(view) {
-                    case 'home': container.innerHTML = this.views.home(); this.initSlider(); break;
-                    case 'menu': container.innerHTML = this.views.menu(); break;
-                    case 'games': container.innerHTML = this.views.games(); break;
-                    case 'club': container.innerHTML = this.views.club(); break;
-                    case 'calendar': container.innerHTML = this.views.calendar(); break;
-                    case 'about': container.innerHTML = this.views.about(); break;
-                    case 'contact': container.innerHTML = this.views.contact(); break;
+                    case 'home': html = this.views.home(); break;
+                    case 'menu': html = this.views.menu(); break;
+                    case 'games': html = this.views.games(); break;
+                    case 'club': html = this.views.club(); break;
+                    case 'calendar': html = this.views.calendar(); break;
+                    case 'contact': html = this.views.contact(); break;
                     case 'admin': 
-                        if(this.state.user?.role === 'admin') container.innerHTML = this.views.admin(); 
-                        else this.renderLoginModal(true); // Show Admin Login
+                        if(this.state.user?.role === 'admin') html = this.views.admin(); 
+                        else { this.openLoginModal(true); return; } // Stop navigation if not admin
                         break;
+                    default: html = this.views.home();
+                }
+                
+                container.innerHTML = html;
+
+                // Post-render scripts
+                if (view === 'home') this.initSlider();
+            },
+
+            toggleMobileMenu() {
+                const menu = document.getElementById('mobile-menu');
+                if (menu.classList.contains('mobile-menu-closed')) {
+                    menu.classList.remove('mobile-menu-closed');
+                    menu.classList.add('mobile-menu-open');
+                } else {
+                    menu.classList.add('mobile-menu-closed');
+                    menu.classList.remove('mobile-menu-open');
                 }
             },
 
+            // --- VIEWS ---
             views: {
                 home() {
                     return `
-                        <!-- Hero Slider -->
-                        <div class="relative h-[85vh] overflow-hidden group">
+                        <div class="relative h-[50vh] md:h-[85vh] overflow-hidden bg-black">
                             <div id="slider-container">
                                 <div class="slide active h-full w-full absolute inset-0">
-                                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920" class="w-full h-full object-cover">
-                                    <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                        <div class="text-center animate-slide-up">
-                                            <h1 class="text-5xl md:text-7xl font-black gold-text mb-4">SOLANO FOOD</h1>
-                                            <p class="text-xl text-white mb-8 font-light">تجربه‌ای متفاوت در تاریکی و نور</p>
-                                        </div>
-                                    </div>
+                                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920" class="w-full h-full object-cover opacity-60">
+                                    <div class="absolute inset-0 flex items-center justify-center"><h1 class="text-4xl md:text-7xl font-black gold-text animate-slide-up">SOLANO FOOD</h1></div>
                                 </div>
                                 <div class="slide h-full w-full absolute inset-0">
-                                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920" class="w-full h-full object-cover">
-                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                        <div class="text-center animate-slide-up">
-                                            <h1 class="text-6xl font-bold text-white drop-shadow-lg">طعم واقعی استیک</h1>
-                                        </div>
-                                    </div>
-                                </div>
-                                 <div class="slide h-full w-full absolute inset-0">
-                                    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?w=1920" class="w-full h-full object-cover">
-                                    <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                        <div class="text-center animate-slide-up">
-                                            <h1 class="text-6xl font-bold text-solano-fire drop-shadow-lg">سوخاری داغ و تند</h1>
-                                        </div>
-                                    </div>
+                                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920" class="w-full h-full object-cover opacity-60">
+                                    <div class="absolute inset-0 flex items-center justify-center"><h1 class="text-4xl md:text-7xl font-black text-white animate-slide-up">طعم واقعی استیک</h1></div>
                                 </div>
                             </div>
-                            <button onclick="app.moveSlide(-1)" class="absolute left-4 top-1/2 text-white text-4xl opacity-50 hover:opacity-100"><i class="fa-solid fa-chevron-left"></i></button>
-                            <button onclick="app.moveSlide(1)" class="absolute right-4 top-1/2 text-white text-4xl opacity-50 hover:opacity-100"><i class="fa-solid fa-chevron-right"></i></button>
                         </div>
-                        
-                        <!-- Intro Section -->
-                        <div class="py-16 bg-solano-panel text-center px-4">
-                            <h2 class="text-3xl font-bold mb-4">اولین رستوران با پرداخت کریپتو در مشهد</h2>
-                            <p class="text-gray-400 max-w-2xl mx-auto mb-8">با توکن اختصاصی SolanoFood پرداخت کنید و ۱۰٪ تخفیف بگیرید. تجربه مدرن‌ترین سیستم سفارش و باشگاه مشتریان.</p>
-                            <button onclick="app.navigate('menu')" class="bg-solano-gold text-black font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.5)] hover:scale-105 transition">مشاهده منو</button>
+                        <div class="py-10 px-4 text-center">
+                            <h2 class="text-2xl md:text-3xl font-bold mb-4 text-white">خوش آمدید به سلانو</h2>
+                            <p class="text-gray-400 mb-6 text-sm md:text-base">اولین رستوران هوشمند با پرداخت ارز دیجیتال در مشهد</p>
+                            <button onclick="app.navigate('menu')" class="bg-solano-gold text-black font-bold py-2 px-8 rounded-full hover:scale-105 transition">سفارش غذا</button>
                         </div>
                     `;
                 },
-                
                 menu() {
                     return `
-                        <div class="max-w-7xl mx-auto px-4 py-10">
-                            <h2 class="text-3xl font-bold gold-text mb-8 text-center">منوی رستوران</h2>
-                            <!-- Filters -->
-                            <div class="flex flex-wrap justify-center gap-3 mb-10">
-                                <button onclick="app.renderMenu('all')" class="px-4 py-2 rounded-full bg-white/10 hover:bg-solano-gold hover:text-black transition text-sm">همه</button>
-                                <button onclick="app.renderMenu('pizza')" class="px-4 py-2 rounded-full bg-white/10 hover:bg-solano-gold hover:text-black transition text-sm">پیتزا</button>
-                                <button onclick="app.renderMenu('steak')" class="px-4 py-2 rounded-full bg-white/10 hover:bg-solano-gold hover:text-black transition text-sm">استیک</button>
-                                <button onclick="app.renderMenu('kebab')" class="px-4 py-2 rounded-full bg-white/10 hover:bg-solano-gold hover:text-black transition text-sm">کباب</button>
-                                <button onclick="app.renderMenu('seafood')" class="px-4 py-2 rounded-full bg-white/10 hover:bg-solano-gold hover:text-black transition text-sm">دریایی</button>
-                                <button onclick="app.renderMenu('fried')" class="px-4 py-2 rounded-full bg-white/10 hover:bg-solano-gold hover:text-black transition text-sm">سوخاری</button>
+                        <div class="max-w-7xl mx-auto px-4 py-8">
+                            <h2 class="text-3xl font-bold gold-text mb-6 text-center">منوی رستوران</h2>
+                            <div class="flex flex-wrap justify-center gap-2 mb-8">
+                                <button onclick="app.renderMenuFilter('all')" class="bg-white/10 px-4 py-2 rounded-full text-sm hover:bg-solano-gold hover:text-black">همه</button>
+                                <button onclick="app.renderMenuFilter('pizza')" class="bg-white/10 px-4 py-2 rounded-full text-sm hover:bg-solano-gold hover:text-black">پیتزا</button>
+                                <button onclick="app.renderMenuFilter('steak')" class="bg-white/10 px-4 py-2 rounded-full text-sm hover:bg-solano-gold hover:text-black">استیک</button>
                             </div>
-                            <div id="menu-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                ${app.renderMenuHTML('all')}
+                            <div id="menu-items" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                ${app.getMenuHtml('all')}
                             </div>
                         </div>
                     `;
                 },
-
                 games() {
                     return `
-                        <div class="max-w-6xl mx-auto px-4 py-12 text-center">
-                            <h1 class="text-4xl font-bold gold-text mb-4">سرگرمی و جوایز</h1>
-                            <p class="text-gray-400 mb-12">بازی کنید، توکن Solano جمع کنید و غذای رایگان بگیرید!</p>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <!-- Wheel -->
-                                <div class="glass-panel p-8 rounded-2xl hover:-translate-y-2 transition duration-300">
-                                    <i class="fa-solid fa-dharmachakra text-5xl text-purple-500 mb-4"></i>
-                                    <h3 class="text-xl font-bold mb-2">گردونه شانس</h3>
-                                    <p class="text-sm text-gray-400 mb-4">شانس خود را برای برنده شدن دسر یا تخفیف امتحان کنید.</p>
-                                    <button onclick="app.openGame('wheel')" class="bg-white/10 hover:bg-purple-600 text-white px-6 py-2 rounded-full transition">شروع بازی</button>
+                         <div class="max-w-5xl mx-auto px-4 py-10 text-center">
+                            <h2 class="text-3xl font-bold gold-text mb-8">سرگرمی و جایزه</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="glass-panel p-6 rounded-xl">
+                                    <i class="fa-solid fa-dharmachakra text-4xl text-purple-500 mb-4"></i>
+                                    <h3 class="font-bold mb-2">گردونه شانس</h3>
+                                    <button onclick="app.openGameModal('wheel')" class="bg-purple-600 text-white px-4 py-2 rounded-full text-sm">بازی کن</button>
                                 </div>
-                                <!-- Puzzle -->
-                                <div class="glass-panel p-8 rounded-2xl hover:-translate-y-2 transition duration-300">
-                                    <i class="fa-solid fa-puzzle-piece text-5xl text-blue-500 mb-4"></i>
-                                    <h3 class="text-xl font-bold mb-2">پازل غذا</h3>
-                                    <p class="text-sm text-gray-400 mb-4">تصویر غذا را در کمتر از ۳۰ ثانیه تکمیل کنید.</p>
-                                    <button onclick="app.openGame('puzzle')" class="bg-white/10 hover:bg-blue-600 text-white px-6 py-2 rounded-full transition">شروع بازی</button>
-                                </div>
-                                <!-- Crossword -->
-                                <div class="glass-panel p-8 rounded-2xl hover:-translate-y-2 transition duration-300">
-                                    <i class="fa-solid fa-table text-5xl text-green-500 mb-4"></i>
-                                    <h3 class="text-xl font-bold mb-2">جدول کلمات</h3>
-                                    <p class="text-sm text-gray-400 mb-4">اطلاعات عمومی غذایی خود را به چالش بکشید.</p>
-                                    <button onclick="app.openGame('crossword')" class="bg-white/10 hover:bg-green-600 text-white px-6 py-2 rounded-full transition">حل جدول</button>
+                                <div class="glass-panel p-6 rounded-xl">
+                                    <i class="fa-solid fa-puzzle-piece text-4xl text-blue-500 mb-4"></i>
+                                    <h3 class="font-bold mb-2">پازل غذا</h3>
+                                    <button onclick="app.openGameModal('puzzle')" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm">بازی کن</button>
                                 </div>
                             </div>
-                        </div>
+                         </div>
                     `;
                 },
-
                 club() {
-                    const user = app.state.user;
-                    if(!user) return `<div class="h-[60vh] flex flex-col items-center justify-center">
-                        <h2 class="text-2xl gold-text mb-4">دسترسی محدود</h2>
-                        <p class="mb-6 text-gray-400">برای دسترسی به کیف پول و سطح VIP لطفا وارد شوید.</p>
-                        <button onclick="app.toggleAuth()" class="bg-solano-gold text-black px-6 py-2 rounded-lg font-bold">ورود به حساب</button>
-                    </div>`;
-
-                    const tierInfo = app.getTierInfo(user.wallet);
-                    const usdtBalance = (user.wallet / db.adminSettings.usdtPrice).toFixed(2);
-
-                    return `
-                        <div class="max-w-5xl mx-auto px-4 py-10">
-                            <!-- Wallet Card -->
-                            <div class="bg-gradient-to-r from-gray-900 to-black border border-solano-gold rounded-3xl p-8 relative overflow-hidden mb-12 shadow-[0_0_30px_rgba(212,175,55,0.2)]">
-                                <div class="absolute top-0 right-0 w-40 h-40 bg-solano-gold/10 rounded-full filter blur-3xl"></div>
-                                <div class="flex flex-col md:flex-row justify-between items-center z-10 relative">
-                                    <div>
-                                        <h2 class="text-gray-400 text-sm mb-1">موجودی کیف پول</h2>
-                                        <div class="text-4xl font-mono font-bold text-white mb-2">${user.wallet.toLocaleString()} <span class="text-sm text-gray-500 font-sans">تومان</span></div>
-                                        <div class="text-lg font-mono text-solano-crypto">≈ ${usdtBalance} USDT</div>
-                                    </div>
-                                    <div class="mt-6 md:mt-0 text-center">
-                                        <div class="inline-block px-4 py-1 rounded-full border border-${tierInfo.color}-500 text-${tierInfo.color}-500 mb-2 font-bold uppercase">${tierInfo.name} MEMBER</div>
-                                        <div class="text-xs text-gray-400">تخفیف شما: ${tierInfo.discount}%</div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Actions -->
-                                <div class="flex gap-4 mt-8">
-                                    <button onclick="app.openChargeModal()" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl font-bold transition"><i class="fa-solid fa-plus-circle mr-2"></i>شارژ حساب (تومان/کریپتو)</button>
-                                    <button onclick="app.connectWallet()" class="flex-1 border border-solano-crypto text-solano-crypto hover:bg-solano-crypto hover:text-black py-3 rounded-xl font-bold transition font-mono">
-                                        ${app.state.cryptoConnected ? 'WALLET CONNECTED' : '<i class="fa-solid fa-link mr-2"></i>CONNECT WALLET'}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Tiers Info -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 text-center">
-                                <div class="glass-panel p-6 rounded-xl ${tierInfo.name === 'Bronze' ? 'border-solano-gold' : ''}">
-                                    <h3 class="text-orange-400 font-bold text-xl mb-2">برنزی</h3>
-                                    <p class="text-xs text-gray-400">۵۰۰ هزار تا ۱.۵ میلیون</p>
-                                    <ul class="text-sm mt-4 text-gray-300 space-y-2"><li>۵٪ تخفیف</li><li>شرکت در قرعه‌کشی</li></ul>
-                                </div>
-                                <div class="glass-panel p-6 rounded-xl ${tierInfo.name === 'Silver' ? 'border-solano-gold' : ''}">
-                                    <h3 class="text-gray-300 font-bold text-xl mb-2">نقره‌ای</h3>
-                                    <p class="text-xs text-gray-400">۱.۵ تا ۵ میلیون</p>
-                                    <ul class="text-sm mt-4 text-gray-300 space-y-2"><li>۱۰٪ تخفیف</li><li>دسر رایگان</li></ul>
-                                </div>
-                                <div class="glass-panel p-6 rounded-xl ${tierInfo.name === 'Gold' ? 'border-solano-gold' : ''}">
-                                    <h3 class="text-yellow-400 font-bold text-xl mb-2">طلایی</h3>
-                                    <p class="text-xs text-gray-400">بالای ۵ میلیون</p>
-                                    <ul class="text-sm mt-4 text-gray-300 space-y-2"><li>۱۵٪ تخفیف</li><li>رزرو VIP</li><li>رژیم رایگان</li></ul>
-                                </div>
-                            </div>
-                            
-                            <div class="text-center">
-                                <button onclick="app.closeAccount()" class="text-red-500 text-xs hover:underline">بستن حساب کاربری و برداشت موجودی</button>
-                            </div>
-                        </div>
-                    `;
-                },
-                
-                calendar() {
-                    const today = new Date();
-                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                    const dateStr = today.toLocaleDateString('fa-IR', options);
+                    const u = app.state.user;
+                    if(!u) return `<div class="h-64 flex flex-col justify-center items-center text-center px-4"><h2 class="text-xl font-bold mb-4">دسترسی محدود</h2><p class="text-gray-400 mb-4">برای دسترسی به باشگاه مشتریان و کیف پول وارد شوید.</p><button onclick="app.toggleAuth()" class="bg-solano-gold text-black px-6 py-2 rounded-lg font-bold">ورود / عضویت</button></div>`;
                     
                     return `
-                        <div class="max-w-4xl mx-auto px-4 py-12 text-center">
-                            <h2 class="text-3xl font-bold mb-8">تقویم غذایی سلانو</h2>
-                            <div class="glass-panel p-8 rounded-3xl mb-8">
-                                <div class="text-5xl font-bold text-solano-gold mb-4">${dateStr}</div>
-                                <div class="text-gray-400 mb-6 flex justify-center gap-4">
-                                    <span>${today.toLocaleDateString('en-US')} (میلادی)</span> | 
-                                    <span>۱۴ جمادی‌الاول (قمری)</span>
+                        <div class="max-w-4xl mx-auto px-4 py-10">
+                            <div class="bg-gradient-to-r from-gray-900 to-black border border-solano-gold rounded-2xl p-6 md:p-10 text-center md:text-right shadow-2xl">
+                                <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                                    <div>
+                                        <h2 class="text-gray-400 text-sm">موجودی کیف پول</h2>
+                                        <div class="text-3xl md:text-4xl font-bold text-white mt-2">${u.wallet.toLocaleString()} <span class="text-sm text-gray-500">تومان</span></div>
+                                    </div>
+                                    <div class="mt-4 md:mt-0">
+                                        <span class="bg-solano-gold text-black px-3 py-1 rounded font-bold text-xs uppercase">عضویت عادی</span>
+                                    </div>
                                 </div>
-                                <div class="bg-white/5 p-6 rounded-xl mb-6">
-                                    <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded mb-2 inline-block">مناسبت امروز</span>
-                                    <h3 class="text-xl font-bold text-white">روز جهانی سرآشپز (فرضی)</h3>
-                                    <p class="text-gray-400 mt-2 text-sm">«غذا تنها هنری است که با تمام حواس پنج‌گانه درک می‌شود.»</p>
+                                <div class="flex gap-3 flex-col md:flex-row">
+                                    <button onclick="app.openChargeModal()" class="bg-green-600 text-white py-3 px-6 rounded-xl font-bold flex-1">شارژ حساب</button>
+                                    <button onclick="alert('به زودی...')" class="border border-solano-crypto text-solano-crypto py-3 px-6 rounded-xl font-bold flex-1">اتصال ولت</button>
                                 </div>
-                                <div class="border border-solano-gold/30 p-6 rounded-xl">
-                                    <h4 class="font-bold text-solano-gold mb-2"><i class="fa-solid fa-fire mr-2"></i>آموزش پخت امروز</h4>
-                                    <h5 class="text-white font-bold text-lg">استیک با سس قارچ</h5>
-                                    <button class="mt-4 text-blue-400 text-sm hover:text-white">مشاهده ویدیو آموزشی</button>
+                                <div class="mt-6 text-center">
+                                     <button onclick="app.logout()" class="text-red-500 text-sm underline">خروج از حساب</button>
                                 </div>
                             </div>
                         </div>
                     `;
                 },
-
+                calendar() {
+                    return `<div class="text-center py-20"><h2 class="text-2xl font-bold gold-text">تقویم غذایی</h2><p class="text-gray-400 mt-4">امروز: ${new Date().toLocaleDateString('fa-IR')} - پیشنهاد سرآشپز: استیک</p></div>`;
+                },
                 contact() {
-                    return `
-                        <div class="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-2 gap-12">
-                            <div>
-                                <h2 class="text-3xl font-bold gold-text mb-6">ارتباط با ما</h2>
-                                <div class="space-y-6 text-gray-300">
-                                    <div class="flex items-start gap-4 glass-panel p-4 rounded-xl">
-                                        <i class="fa-solid fa-map-location-dot text-3xl text-solano-gold"></i>
-                                        <div>
-                                            <h4 class="font-bold text-white">آدرس</h4>
-                                            <p>مشهد، قاسم‌آباد، میدان مادر، جنب شرکت برق، رستوران سلانو</p>
-                                            <div class="flex gap-2 mt-2">
-                                                <a href="#" class="text-blue-400 text-xs bg-blue-400/10 px-2 py-1 rounded">Waze</a>
-                                                <a href="#" class="text-green-400 text-xs bg-green-400/10 px-2 py-1 rounded">Balad</a>
-                                                <a href="#" class="text-red-400 text-xs bg-red-400/10 px-2 py-1 rounded">Google Maps</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-4 glass-panel p-4 rounded-xl">
-                                        <i class="fa-solid fa-phone-volume text-3xl text-solano-gold"></i>
-                                        <div>
-                                            <h4 class="font-bold text-white">تلفن رزرو</h4>
-                                            <p class="font-mono text-lg">05136641119</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="glass-panel p-8 rounded-2xl">
-                                <h3 class="text-xl font-bold mb-4">انتقادات و پیشنهادات</h3>
-                                <form onsubmit="alert('پیام شما ثبت شد!'); return false;" class="space-y-4">
-                                    <input type="text" placeholder="نام و نام خانوادگی" class="w-full bg-black/50 border border-white/10 rounded p-3 text-white">
-                                    <input type="text" placeholder="شماره تماس" class="w-full bg-black/50 border border-white/10 rounded p-3 text-white">
-                                    <textarea placeholder="پیام شما..." class="w-full bg-black/50 border border-white/10 rounded p-3 text-white h-32"></textarea>
-                                    <button type="submit" class="w-full bg-solano-gold text-black font-bold py-3 rounded hover:bg-white transition">ارسال پیام</button>
-                                </form>
-                            </div>
-                        </div>
-                    `;
+                    return `<div class="text-center py-20 px-4"><h2 class="text-2xl font-bold gold-text mb-4">ارتباط با ما</h2><p class="text-gray-400">مشهد، قاسم‌آباد، میدان مادر</p><p class="text-xl font-bold mt-2">05136641119</p></div>`;
                 },
-                
-                about() {
-                    return `
-                        <div class="max-w-7xl mx-auto px-4 py-12">
-                            <h1 class="text-4xl font-bold text-center gold-text mb-12">درباره سلانو</h1>
-                            <div class="glass-panel p-8 rounded-3xl mb-12">
-                                <p class="text-lg leading-relaxed text-gray-300">
-                                    سلانو فقط یک رستوران نیست؛ داستانی است از ترکیب سنت و تکنولوژی. ما در سال ۱۴۰۲ با هدف ایجاد فضایی متفاوت در قلب مشهد کار خود را آغاز کردیم. 
-                                    معماری ما الهام گرفته از تضاد نور و تاریکی است و غذاهای ما با تکنیک‌های خاص دودی طبخ می‌شوند.
-                                </p>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-6">گالری تصاویر</h3>
-                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                ${db.gallery.map(img => `<div class="aspect-square overflow-hidden rounded-xl"><img src="${img}" class="w-full h-full object-cover hover:scale-110 transition duration-500"></div>`).join('')}
-                            </div>
-                        </div>
-                    `;
-                },
-
                 admin() {
                     return `
-                        <div class="max-w-7xl mx-auto px-4 py-8">
-                            <div class="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
-                                <h2 class="text-3xl font-bold text-red-500">پنل مدیریت و حسابداری</h2>
-                                <div class="flex gap-2">
-                                    <button onclick="app.adminExportExcel()" class="bg-green-600 text-white px-4 py-2 rounded text-xs"><i class="fa-solid fa-file-excel mr-2"></i>خروجی اکسل</button>
-                                    <button onclick="app.logout()" class="bg-gray-700 text-white px-4 py-2 rounded text-xs">خروج</button>
-                                </div>
+                        <div class="max-w-4xl mx-auto px-4 py-10">
+                            <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
+                                <h2 class="text-2xl font-bold text-red-500">مدیریت</h2>
+                                <button onclick="app.logout()" class="text-sm bg-gray-800 px-3 py-1 rounded">خروج</button>
                             </div>
-                            
-                            <!-- Stats -->
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                                <div class="glass-panel p-4 rounded-xl">
-                                    <span class="text-xs text-gray-400">فروش امروز</span>
-                                    <div class="text-2xl font-bold gold-text">12,450,000 <span class="text-xs">تومان</span></div>
-                                </div>
-                                <div class="glass-panel p-4 rounded-xl">
-                                    <span class="text-xs text-gray-400">کاربران VIP</span>
-                                    <div class="text-2xl font-bold text-blue-400">142</div>
-                                </div>
-                                <div class="glass-panel p-4 rounded-xl">
-                                    <span class="text-xs text-gray-400">سفارشات کریپتویی</span>
-                                    <div class="text-2xl font-bold text-solano-crypto">8</div>
-                                </div>
-                                <div class="glass-panel p-4 rounded-xl bg-gray-800">
-                                    <label class="text-xs text-gray-400 block mb-1">نرخ تتر (تومان)</label>
-                                    <input type="number" value="${db.adminSettings.usdtPrice}" onchange="db.adminSettings.usdtPrice = this.value" class="bg-black border border-white/20 rounded w-full px-2 py-1 text-white font-mono text-sm">
-                                </div>
-                            </div>
-
-                            <!-- Tabs -->
-                            <div class="flex gap-4 border-b border-white/10 mb-6">
-                                <button onclick="document.getElementById('tab-inventory').classList.remove('hidden');document.getElementById('tab-content').classList.add('hidden');" class="text-solano-gold pb-2 border-b-2 border-solano-gold">انبار و موجودی</button>
-                                <button onclick="document.getElementById('tab-content').classList.remove('hidden');document.getElementById('tab-inventory').classList.add('hidden');" class="text-gray-400 pb-2 hover:text-white">محتوا و تبلیغات</button>
-                            </div>
-
-                            <!-- Inventory Tab -->
-                            <div id="tab-inventory">
-                                <table class="w-full text-right text-sm text-gray-400">
-                                    <thead class="bg-white/5 text-white">
-                                        <tr>
-                                            <th class="p-3">نام غذا</th>
-                                            <th>دسته‌بندی</th>
-                                            <th>قیمت</th>
-                                            <th>وضعیت موجودی</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${db.menu.map(item => `
-                                            <tr class="border-b border-white/5 hover:bg-white/5">
-                                                <td class="p-3">${item.name}</td>
-                                                <td>${item.cat}</td>
-                                                <td>${item.price.toLocaleString()}</td>
-                                                <td>
-                                                    <button onclick="app.toggleStock(${item.id})" class="px-3 py-1 rounded-full text-xs font-bold ${item.stock ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">
-                                                        ${item.stock ? 'موجود' : 'ناموجود'}
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- Content Tab -->
-                            <div id="tab-content" class="hidden space-y-6">
-                                <div class="glass-panel p-6 rounded-xl">
-                                    <h3 class="font-bold mb-4">افزودن به گالری</h3>
-                                    <div class="flex gap-2">
-                                        <input type="text" id="new-img-url" placeholder="لینک تصویر..." class="flex-1 bg-black border border-white/20 rounded px-3 py-2 text-white text-sm">
-                                        <button onclick="db.gallery.push(document.getElementById('new-img-url').value); alert('اضافه شد!');" class="bg-blue-600 px-4 rounded text-white">افزودن</button>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="glass-panel p-4 rounded-lg">
+                                    <h3 class="font-bold mb-2">مدیریت منو</h3>
+                                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                                        ${db.menu.map(i => `<div class="flex justify-between text-xs bg-white/5 p-2 rounded"><span>${i.name}</span><button onclick="app.toggleStock(${i.id})" class="${i.stock?'text-green-500':'text-red-500'}">${i.stock?'موجود':'ناموجود'}</button></div>`).join('')}
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-2">* برای فایل لوکال نیاز به بکند واقعی است. اینجا لینک عکس را وارد کنید.</p>
-                                </div>
-                                <div class="glass-panel p-6 rounded-xl">
-                                    <h3 class="font-bold mb-4">اتوماسیون محتوا (n8n)</h3>
-                                    <button onclick="console.log('Triggering n8n webhook...'); alert('درخواست تولید محتوا به n8n ارسال شد.');" class="bg-purple-600 text-white px-4 py-2 rounded text-sm">
-                                        <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>تولید خبر جدید با هوش مصنوعی
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -644,308 +403,160 @@
                 }
             },
 
-            // --- LOGIC FUNCTIONS ---
+            // --- LOGIC ---
             initSlider() {
+                const slides = document.getElementsByClassName("slide");
+                if (!slides.length) return;
+                
                 let slideIndex = 0;
-                
+                // Safe interval clearing
+                if (this.sliderInterval) clearInterval(this.sliderInterval);
+
                 const showSlides = () => {
-                    const slides = document.getElementsByClassName("slide");
-                    
-                    // Stop if user navigated away (slides removed from DOM)
-                    if (!slides || slides.length === 0) return;
+                    // DOM Check
+                    const currentSlides = document.getElementsByClassName("slide");
+                    if (currentSlides.length === 0) return;
 
-                    for (let i = 0; i < slides.length; i++) {
-                        slides[i].style.display = "none"; 
-                    }
-                    
+                    for (let i = 0; i < currentSlides.length; i++) currentSlides[i].style.display = "none";
                     slideIndex++;
-                    if (slideIndex > slides.length) slideIndex = 1;    
-                    
-                    if (slides[slideIndex - 1]) {
-                        slides[slideIndex - 1].style.display = "block";
-                        setTimeout(showSlides, 4000); // Change image every 4 seconds
-                    }
+                    if (slideIndex > currentSlides.length) slideIndex = 1;
+                    currentSlides[slideIndex - 1].style.display = "block";
                 };
-                showSlides();
                 
-                // Also defined globally for buttons
-                app.moveSlide = (n) => {
-                    alert("اسلایدر در حالت خودکار است.");
-                };
+                showSlides(); // Run once immediately
+                this.sliderInterval = setInterval(showSlides, 4000);
             },
 
-            renderSideAds() {
-                const container = document.getElementById('side-ads');
-                container.innerHTML = db.ads.map(ad => `
-                    <div class="glass-panel p-2 rounded-lg relative group cursor-pointer">
-                        <span class="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] px-1 rounded font-bold">AD</span>
-                        <img src="${ad.img}" class="w-full rounded opacity-80 group-hover:opacity-100 transition">
-                    </div>
-                `).join('');
-            },
-
-            renderMenuHTML(filter) {
+            getMenuHtml(filter) {
                 let items = db.menu;
-                if(filter !== 'all') items = items.filter(i => i.cat === filter);
-                
+                if (filter !== 'all') items = items.filter(i => i.cat === filter);
                 return items.map(item => `
-                    <div class="bg-solano-panel rounded-2xl overflow-hidden border border-white/5 group hover:border-solano-gold/50 transition relative">
-                        ${!item.stock ? '<div class="absolute inset-0 bg-black/70 z-10 flex items-center justify-center text-red-500 font-bold text-xl">ناموجود</div>' : ''}
-                        <div class="h-48 overflow-hidden relative">
-                            <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
-                            ${app.state.user?.wallet ? '<div class="absolute top-2 right-2 bg-solano-gold text-black text-xs font-bold px-2 py-1 rounded shadow">۱۰٪ تخفیف VIP</div>' : ''}
+                    <div class="bg-[#111] rounded-xl overflow-hidden border border-white/10">
+                        <div class="h-40 relative">
+                            <img src="${item.img}" class="w-full h-full object-cover">
+                            ${!item.stock ? '<div class="absolute inset-0 bg-black/70 flex items-center justify-center text-red-500 font-bold">ناموجود</div>' : ''}
                         </div>
                         <div class="p-4">
-                            <h3 class="font-bold text-white mb-1">${item.name}</h3>
-                            <div class="flex justify-between items-center mt-4">
-                                <div class="flex flex-col">
-                                    <span class="text-solano-gold font-bold">${item.price.toLocaleString()}</span>
-                                    ${app.state.user?.wallet ? `<span class="text-xs text-gray-500 line-through">${Math.round(item.price * 1.1).toLocaleString()}</span>` : ''}
-                                </div>
-                                <button onclick="app.addToCart(${item.id})" class="bg-white/10 hover:bg-solano-gold hover:text-black w-8 h-8 rounded-full flex items-center justify-center transition" ${!item.stock ? 'disabled' : ''}><i class="fa-solid fa-plus"></i></button>
+                            <h3 class="font-bold text-white">${item.name}</h3>
+                            <div class="flex justify-between items-center mt-3">
+                                <span class="text-solano-gold text-sm font-bold">${item.price.toLocaleString()}</span>
+                                <button onclick="app.addToCart(${item.id})" class="bg-white/10 w-8 h-8 rounded-full flex items-center justify-center hover:bg-solano-gold hover:text-black transition"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                     </div>
                 `).join('');
             },
-
-            renderMenu(filter) {
-                document.getElementById('menu-grid').innerHTML = this.renderMenuHTML(filter);
+            
+            renderMenuFilter(cat) {
+                document.getElementById('menu-items').innerHTML = this.getMenuHtml(cat);
             },
 
             toggleStock(id) {
                 const item = db.menu.find(i => i.id === id);
-                item.stock = !item.stock;
-                this.navigate('admin'); // Re-render
-            },
-            
-            adminExportExcel() {
-                // Mock Data for Export
-                const data = [
-                    { OrderID: 101, Amount: 500000, Date: "1402/08/01", Payment: "Crypto" },
-                    { OrderID: 102, Amount: 350000, Date: "1402/08/01", Payment: "Card" }
-                ];
-                const ws = XLSX.utils.json_to_sheet(data);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Sales");
-                XLSX.writeFile(wb, "Solano_Report.xlsx");
+                if(item) item.stock = !item.stock;
+                this.navigate('admin');
             },
 
-            // --- AUTH & USER LOGIC ---
-            toggleAuth() {
-                if(this.state.user) {
-                    if(confirm("آیا میخواهید از حساب خارج شوید؟")) {
-                        this.state.user = null;
-                        localStorage.removeItem('solano_user');
-                        this.updateAuthUI();
-                        this.navigate('home');
-                    }
-                } else {
-                    this.renderLoginModal();
+            renderAds() {
+                const container = document.getElementById('side-ads');
+                if(container) {
+                    container.innerHTML = db.ads.map(ad => `<div class="glass-panel p-2 rounded mb-2"><img src="${ad.img}" class="w-full rounded opacity-80"></div>`).join('');
                 }
             },
 
-            renderLoginModal(isAdmin = false) {
+            // --- AUTH & MODALS ---
+            toggleAuth() {
+                if(this.state.user) {
+                    if(confirm('خروج از حساب؟')) this.logout();
+                } else {
+                    this.openLoginModal();
+                }
+            },
+            
+            updateAuthUI() {
+                const btn = document.getElementById('auth-btn');
+                if(this.state.user) {
+                    btn.innerHTML = `<i class="fa-solid fa-user"></i> ${this.state.user.name}`;
+                    btn.classList.add('bg-green-600', 'text-white');
+                } else {
+                    btn.innerHTML = 'ورود';
+                    btn.classList.remove('bg-green-600', 'text-white');
+                }
+            },
+
+            logout() {
+                this.state.user = null;
+                localStorage.removeItem('solano_user');
+                this.updateAuthUI();
+                this.navigate('home');
+            },
+
+            openLoginModal(isAdmin = false) {
                 const modal = document.getElementById('modal-overlay');
                 modal.classList.remove('hidden');
                 modal.innerHTML = `
-                    <div class="bg-solano-panel border border-solano-gold rounded-2xl p-8 w-full max-w-md relative" onclick="event.stopPropagation()">
-                        <button onclick="app.closeModals()" class="absolute top-4 left-4 text-gray-400"><i class="fa-solid fa-times"></i></button>
-                        <h2 class="text-2xl font-bold mb-6 text-center gold-text">${isAdmin ? 'ورود مدیر' : 'ورود / عضویت'}</h2>
-                        <form onsubmit="${isAdmin ? 'app.handleAdminLogin(event)' : 'app.handleUserLogin(event)'}" class="space-y-4">
-                            <input type="text" name="user" placeholder="نام کاربری / موبایل" class="w-full bg-black border border-white/20 rounded p-3 text-white">
-                            <input type="password" name="pass" placeholder="رمز عبور" class="w-full bg-black border border-white/20 rounded p-3 text-white">
-                            <button type="submit" class="w-full bg-solano-gold text-black font-bold py-3 rounded transition hover:bg-white">ورود</button>
+                    <div class="bg-[#151515] border border-solano-gold p-6 rounded-xl w-full max-w-sm" onclick="event.stopPropagation()">
+                        <h2 class="text-xl font-bold mb-4 text-center gold-text">${isAdmin ? 'ورود مدیر' : 'ورود'}</h2>
+                        <form onsubmit="${isAdmin ? 'app.handleAdminLogin(event)' : 'app.handleUserLogin(event)'}" class="space-y-3">
+                            <input name="user" placeholder="نام کاربری" class="w-full bg-black border border-white/20 rounded p-2 text-white">
+                            <input type="password" name="pass" placeholder="رمز عبور" class="w-full bg-black border border-white/20 rounded p-2 text-white">
+                            <button class="w-full bg-solano-gold text-black font-bold py-2 rounded">ورود</button>
                         </form>
-                        ${!isAdmin ? '<p class="text-center text-xs text-gray-500 mt-4">برای تست: شماره 0912 و رمز دلخواه</p>' : '<p class="text-center text-xs text-gray-500 mt-4">Admin: admin / admin</p>'}
+                        <button onclick="app.closeModals()" class="mt-3 text-xs text-gray-500 w-full">انصراف</button>
                     </div>
                 `;
             },
 
             handleUserLogin(e) {
                 e.preventDefault();
-                // Create Mock User
-                this.state.user = {
-                    name: "کاربر سلانو",
-                    phone: e.target.user.value,
-                    wallet: 0,
-                    cryptoWallet: 0,
-                    role: 'user'
-                };
+                this.state.user = { name: "کاربر مهمان", wallet: 0, role: 'user' };
                 localStorage.setItem('solano_user', JSON.stringify(this.state.user));
                 this.closeModals();
                 this.updateAuthUI();
-                alert("خوش آمدید! اکنون عضو باشگاه مشتریان هستید.");
+                alert('خوش آمدید');
             },
 
             handleAdminLogin(e) {
                 e.preventDefault();
                 if(e.target.user.value === 'admin' && e.target.pass.value === 'admin') {
-                    this.state.user = { name: "مدیر کل", role: 'admin', wallet: 0 };
+                    this.state.user = { name: "مدیر", role: 'admin', wallet: 0 };
                     this.closeModals();
                     this.navigate('admin');
                 } else {
-                    alert("اطلاعات اشتباه است.");
-                }
-            },
-
-            updateAuthUI() {
-                const btn = document.getElementById('auth-btn');
-                if(this.state.user) {
-                    btn.innerHTML = `<i class="fa-solid fa-user mr-1"></i> ${this.state.user.name}`;
-                    btn.classList.add('bg-green-600', 'text-white');
-                } else {
-                    btn.innerText = 'ورود / عضویت';
-                    btn.classList.remove('bg-green-600', 'text-white');
+                    alert('اطلاعات غلط است');
                 }
             },
             
-            getTierInfo(balance) {
-                if(balance >= 5000000) return { name: 'Gold', color: 'yellow', discount: 15 };
-                if(balance >= 1500000) return { name: 'Silver', color: 'gray', discount: 10 };
-                if(balance >= 500000) return { name: 'Bronze', color: 'orange', discount: 5 };
-                return { name: 'Basic', color: 'gray', discount: 0 };
+            openGameModal(type) {
+                 const modal = document.getElementById('modal-overlay');
+                 modal.classList.remove('hidden');
+                 modal.innerHTML = `<div class="bg-[#151515] border border-white/20 p-6 rounded-xl text-center" onclick="event.stopPropagation()"><h3 class="text-xl font-bold mb-4">${type==='wheel'?'گردونه':'پازل'}</h3><div class="h-32 flex items-center justify-center bg-black/50 rounded mb-4 text-gray-500">دموی بازی</div><button onclick="app.closeModals()" class="bg-red-500 text-white px-4 py-2 rounded">بستن</button></div>`;
             },
             
             openChargeModal() {
-                 const modal = document.getElementById('modal-overlay');
-                modal.classList.remove('hidden');
-                modal.innerHTML = `
-                    <div class="bg-solano-panel border border-solano-gold rounded-2xl p-8 w-full max-w-md relative" onclick="event.stopPropagation()">
-                        <button onclick="app.closeModals()" class="absolute top-4 left-4 text-gray-400"><i class="fa-solid fa-times"></i></button>
-                        <h2 class="text-xl font-bold mb-4 text-center">شارژ کیف پول</h2>
-                        
-                        <div class="flex gap-2 mb-4">
-                            <button onclick="this.nextElementSibling.classList.remove('bg-solano-gold', 'text-black'); this.classList.add('bg-solano-gold', 'text-black'); document.getElementById('pay-toman').classList.remove('hidden'); document.getElementById('pay-crypto').classList.add('hidden');" class="flex-1 bg-solano-gold text-black py-2 rounded text-sm font-bold">تومان</button>
-                            <button onclick="this.previousElementSibling.classList.remove('bg-solano-gold', 'text-black'); this.classList.add('bg-solano-gold', 'text-black'); document.getElementById('pay-crypto').classList.remove('hidden'); document.getElementById('pay-toman').classList.add('hidden');" class="flex-1 border border-white/20 py-2 rounded text-sm font-bold">تتر (USDT)</button>
-                        </div>
-
-                        <div id="pay-toman">
-                            <label class="block text-xs text-gray-400 mb-1">مبلغ (حداقل ۲۰۰,۰۰۰ تومان)</label>
-                            <input type="number" id="charge-amount" value="500000" class="w-full bg-black border border-white/20 rounded p-2 text-white mb-4">
-                            <button onclick="app.processCharge('toman')" class="w-full bg-green-600 py-2 rounded font-bold">پرداخت آنلاین</button>
-                        </div>
-
-                        <div id="pay-crypto" class="hidden text-center">
-                            <div class="bg-black p-4 rounded border border-solano-crypto/30 mb-4">
-                                <div class="text-xs text-gray-400 mb-2">آدرس ولت رستوران (TRC20):</div>
-                                <div class="font-mono text-[10px] text-solano-crypto break-all select-all">${db.adminSettings.walletAddress}</div>
-                            </div>
-                            <label class="block text-xs text-gray-400 mb-1">مبلغ واریزی (USDT)</label>
-                            <input type="number" id="crypto-amount" value="10" class="w-full bg-black border border-solano-crypto/50 rounded p-2 text-white mb-4 font-mono text-solano-crypto">
-                            <button onclick="app.processCharge('crypto')" class="w-full bg-solano-crypto text-black py-2 rounded font-bold">تایید انتقال</button>
-                        </div>
-                    </div>
-                `;
-            },
-            
-            processCharge(type) {
-                let amount = 0;
-                if(type === 'toman') {
-                    amount = parseInt(document.getElementById('charge-amount').value);
-                    if(amount < 200000) return alert("حداقل مبلغ شارژ ۲۰۰ هزار تومان است.");
-                } else {
-                    const usdt = parseFloat(document.getElementById('crypto-amount').value);
-                    amount = usdt * db.adminSettings.usdtPrice;
-                }
-                
-                this.state.user.wallet += amount;
-                localStorage.setItem('solano_user', JSON.stringify(this.state.user));
-                alert("کیف پول با موفقیت شارژ شد!");
-                this.closeModals();
-                this.navigate('club');
-            },
-            
-            closeAccount() {
-                if(this.state.user.wallet > 0) {
-                    if(confirm(`مبلغ ${this.state.user.wallet.toLocaleString()} تومان به شماره شبای شما واریز خواهد شد. آیا مطمئن هستید؟`)) {
-                        alert("درخواست تسویه ثبت شد. حساب شما بسته شد.");
-                        this.state.user = null;
-                        localStorage.removeItem('solano_user');
-                        this.navigate('home');
-                    }
-                } else {
-                    alert("موجودی شما صفر است.");
-                }
-            },
-            
-            connectWallet() {
-                // Simulation
-                const btn = event.target;
-                btn.innerText = "Connecting...";
-                setTimeout(() => {
-                    this.state.cryptoConnected = true;
-                    alert("کیف پول با موفقیت متصل شد (MetaMask Simulated).");
-                    this.navigate('club');
-                }, 1500);
+                alert('درگاه پرداخت در نسخه دمو فعال نیست.');
             },
 
-            // --- GAMES ---
-            openGame(type) {
-                const modal = document.getElementById('modal-overlay');
-                modal.classList.remove('hidden');
-                
-                if (type === 'wheel') {
-                    modal.innerHTML = `
-                        <div class="bg-solano-panel border border-solano-gold rounded-full p-4 w-80 h-80 relative flex items-center justify-center" onclick="event.stopPropagation()">
-                             <button onclick="app.closeModals()" class="absolute top-0 right-0 text-gray-400 bg-black rounded-full w-8 h-8 z-20"><i class="fa-solid fa-times"></i></button>
-                             <div id="wheel-spinner" class="w-full h-full rounded-full border-4 border-purple-600" style="background: conic-gradient(red, yellow, green, blue, red);"></div>
-                             <button onclick="this.previousElementSibling.style.transform = 'rotate(' + (Math.random() * 360 + 720) + 'deg)'; this.previousElementSibling.style.transition = '3s'; setTimeout(()=> alert('تبریک! شما برنده ۱۰ توکن سولانو شدید.'), 3200);" class="absolute bg-white text-black w-16 h-16 rounded-full font-bold z-10 shadow-lg">SPIN</button>
-                             <div class="absolute top-0 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[20px] border-t-white z-10"></div>
-                        </div>
-                    `;
-                } else if (type === 'puzzle') {
-                     modal.innerHTML = `
-                        <div class="bg-solano-panel border border-blue-500 rounded-2xl p-6 w-full max-w-md" onclick="event.stopPropagation()">
-                            <h3 class="text-center font-bold mb-4">پازل غذا</h3>
-                            <div class="grid grid-cols-2 gap-1 h-64 bg-gray-800 mb-4">
-                                <div class="bg-gray-700 flex items-center justify-center text-2xl cursor-pointer hover:bg-gray-600" onclick="this.style.opacity=0.5">1</div>
-                                <div class="bg-gray-700 flex items-center justify-center text-2xl cursor-pointer hover:bg-gray-600" onclick="this.style.opacity=0.5">2</div>
-                                <div class="bg-gray-700 flex items-center justify-center text-2xl cursor-pointer hover:bg-gray-600" onclick="this.style.opacity=0.5">3</div>
-                                <div class="bg-gray-700 flex items-center justify-center text-2xl cursor-pointer hover:bg-gray-600" onclick="this.style.opacity=0.5">4</div>
-                            </div>
-                            <p class="text-xs text-gray-400 text-center mb-4">روی قطعات کلیک کنید تا تصویر کامل شود (دمو).</p>
-                            <button onclick="alert('شما برنده شدید!'); app.closeModals();" class="w-full bg-blue-600 py-2 rounded font-bold">دریافت جایزه</button>
-                        </div>
-                     `;
-                } else {
-                    alert("بازی به زودی اضافه می‌شود.");
-                    this.closeModals();
-                }
-            },
+            toggleCart() { alert('سبد خرید خالی است'); },
 
-            // --- AI ---
-            toggleAI() {
-                document.getElementById('ai-window').classList.toggle('hidden');
-            },
-            
-            sendAI() {
-                const input = document.getElementById('ai-input');
-                const msg = input.value;
-                if(!msg) return;
-                
-                const container = document.getElementById('ai-messages');
-                container.innerHTML += `<div class="bg-blue-600 p-2 rounded-lg rounded-tl-none self-start mr-auto max-w-[90%] text-right mb-2">${msg}</div>`;
-                input.value = '';
-                
-                setTimeout(() => {
-                    container.innerHTML += `<div class="bg-white/10 p-2 rounded-lg rounded-tr-none self-end ml-auto max-w-[90%] text-right border border-white/5">برای پاسخ دقیق راجع به "${msg}" باید به API جمینای متصل شوم. فعلا پیشنهاد می‌کنم منوی پیتزای ما را چک کنید! 🍕</div>`;
-                    container.scrollTop = container.scrollHeight;
-                }, 1000);
-            },
-
-            // --- UTILS ---
-            toggleCart() {
-                alert("سبد خرید در این نسخه دمو ساده‌سازی شده است. لطفا از منو غذا انتخاب کنید.");
-            },
             closeModals(e) {
                 if(!e || e.target.id === 'modal-overlay' || e.target.closest('button')) {
                     document.getElementById('modal-overlay').classList.add('hidden');
                 }
+            },
+            
+            toggleAI() { document.getElementById('ai-window').classList.toggle('hidden'); },
+            sendAI() { 
+                const i = document.getElementById('ai-input');
+                if(i.value) {
+                    document.getElementById('ai-messages').innerHTML += `<div class="bg-blue-600 p-2 rounded-lg rounded-tl-none self-start ml-auto mb-2">${i.value}</div>`;
+                    setTimeout(()=> document.getElementById('ai-messages').innerHTML += `<div class="bg-white/10 p-2 rounded-lg rounded-tr-none self-end ml-auto text-right">به زودی پاسخ می‌دهم...</div>`, 1000);
+                    i.value = '';
+                }
             }
         };
 
-        // Init
+        // Start
         document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
 </body>
